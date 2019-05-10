@@ -11,8 +11,24 @@ falling .rs 1
 goright .rs 1
 goleft  .rs 1
 
+rightupcounter .rs 1
+rightdowncounter .rs 1
+
+goingrightup .rs 1
+goingrightdown .rs 1
+
+switched .rs 1
+
   .bank 0
   .org $C000 
+
+SwitchRightLeftSub:
+  LDA #$0
+  STA goingrightup
+  LDA #$1
+  STA goingrightdown
+  STA switched
+  RTI
 
 AdvanceFrameFunc:
   LDX $0201
@@ -45,28 +61,6 @@ MakeFrameOne:
 MakeFrameOneFinal:
   LDA #$1
   STA $0201
-  RTI
-
-JumpRight:
-  LDA #$1       ;disable left input
-  STA goright
-  LDA #$0
-  STA goleft
-
-  LDA $0200     ;move sprite up
-  SEC
-  SBC #$02
-  STA $0200
-
-  LDA $0203     ;move sprite right
-  CLC
-  ADC #$02
-  STA $0203
-
-  INX
-  CPX #$10
-  BNE JumpRight
-
   RTI
 
 RESET:
@@ -104,8 +98,6 @@ vblankwait2:      ; Second wait for vblank, PPU is ready after this
   BPL vblankwait2
   LDA #$1
   STA falling
-  STA goright
-  STA goleft
   LDA #$0
 
 
@@ -182,26 +174,51 @@ ReadA:
   AND #%00000001
   BEQ ReadADone  
 
-  LDA goleft
-  CMP #$1
-  BEQ ReadADone   ;disable right input
-  LDA #$1
+  LDA #$1                 ;disable left jump
   STA goright
+  STA goingrightup
+  LDA #$0
+  STA goleft
+  STA rightdowncounter
+  STA rightupcounter
+  STA goingrightdown
+  STA goingrightdown
+  STA switched
+  JMP JumpRight
 
-  LDX #$0
-  CPX #$0
-  BEQ JumpRightLoop  
+SwitchRightLeft:
+  JSR SwitchRightLeftSub
+
 ReadADone:
   
-JumpRightLoop:
-  LDA goright
-  CMP #$0
-  BNE JumpRightLoopEnd
 
+JumpRight:
+  LDA goright       ;dont go right constantly
+  CMP #$1
+  BEQ Continue
+  JMP JumpRightEnd
 
+Continue:
+  LDA #$0
+  STA falling
+
+JumpUpRightLoop:
+  LDA goingrightdown
+  CMP #$1
+  BEQ JumpUpRightLoopEnd
+
+  LDA #$1
+  STA goingrightup
+  LDA #$0
+  STA goingrightdown
+
+  INC rightupcounter
+  LDA rightupcounter
+  CMP #$05
+  BEQ JumpUpRightLoopEnd
 
   LDA $0200     ;move sprite up
-  SEC
+  CLC
   SBC #$02
   STA $0200
 
@@ -209,8 +226,58 @@ JumpRightLoop:
   CLC
   ADC #$02
   STA $0203
-  INX
-JumpRightLoopEnd:
+JumpUpRightLoopEnd:
+  LDA switched
+  CMP #$1
+  BEQ JumpDownRightLoop
+  LDA rightupcounter
+  CMP #$05
+  BEQ SwitchRightLeft
+
+JumpDownRightLoop:
+
+  LDA goingrightup
+  CMP #$1
+  BEQ JumpDownRightLoopEnd
+
+  LDA #$1
+  STA goingrightdown
+  LDA #$0
+  STA goingrightup
+
+  INC rightdowncounter
+  LDA rightdowncounter
+  CMP #$05
+  BEQ JumpDownRightLoopEnd
+
+  LDA $0200     ;move sprite down
+  SEC
+  ADC #$02
+  STA $0200
+
+  LDA $0203     ;move sprite right
+  CLC
+  ADC #$02
+  STA $0203
+JumpDownRightLoopEnd:
+
+CheckBothVars:
+  LDA rightdowncounter
+  CMP #$05
+  BNE CheckBothVarsEnd
+  LDA rightupcounter
+  CMP #$05
+  BNE CheckBothVarsEnd
+
+  LDA #$0
+  STA goright
+
+  LDA #$1
+  STA falling
+
+CheckBothVarsEnd:
+
+JumpRightEnd:
 
 ReadB: 
   LDA $4016
@@ -235,10 +302,10 @@ ReadUp:
   AND #%0000001
   BEQ ReadUpDone
 
-  LDA $0200
-  SEC
-  SBC #$02
-  STA $0200
+  ; LDA $0200
+  ; SEC
+  ; SBC #$02
+  ; STA $0200
 ReadUpDone:
 
 ReadDown:
@@ -255,10 +322,10 @@ ReadLeft:
   LDA #%00000000        ;flip sprite horizontally to the left
   STA $0202
 
-  LDA $0203
-  SEC
-  SBC #$02
-  STA $0203
+  ; LDA $0203
+  ; SEC
+  ; SBC #$02
+  ; STA $0203
 ReadLeftDone:
 
 ReadRight:
