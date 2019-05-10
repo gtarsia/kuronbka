@@ -1,6 +1,6 @@
 # kuronbka
 
-Kuronbka (куронька) is an NES game made entirely in 6502 Assembly
+kuronbka (куронька) is an NES game made entirely in 6502 Assembly
 
 The .asm file is provided and it can be assembled on Windows and Linux
 
