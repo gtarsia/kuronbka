@@ -14,7 +14,7 @@ sudo apt-get install nesasm
 nesasm game.asm
 ```
 
-The program outuputs a ROM file which should be able to run in any NES emulator
+The program outuputs a game.nes ROM file which should be able to run in any NES emulator
 
 ### Windows
 
@@ -27,6 +27,7 @@ assembler.exe game.asm
 pause
 ```
 
+This also produces a game.nes ROM file and cpuld be run in an emulator
 ## Contribution
 
 This is a personal project, and no contribution is needed
