@@ -1,4 +1,4 @@
-# kuronbka
+# kuronbka (currently very early WIP)
 
 kuronbka (куронька) is an NES game made entirely in 6502 Assembly
 
