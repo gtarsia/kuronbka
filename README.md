@@ -27,7 +27,7 @@ assembler.exe game.asm
 pause
 ```
 
-This also produces a game.nes ROM file and cpuld be run in an emulator
+This also produces a game.nes ROM file and could be run in an emulator
 ## Contribution
 
 This is a personal project, and no contribution is needed
