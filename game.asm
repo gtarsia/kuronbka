@@ -17,12 +17,18 @@ rightdowncounter .rs 1
 goingrightup .rs 1
 goingrightdown .rs 1
 
-switched .rs 1
+leftupcounter .rs 1
+leftdowncounter .rs 1
+
+goingleftup .rs 1
+goingleftdown .rs 1
+
+rightswitched .rs 1
 
   .bank 0
   .org $C000 
 
-SwitchRightLeftSub:
+SwitchRightUpDownSub:
   LDA #$0
   STA goingrightup
   LDA #$1
@@ -183,11 +189,11 @@ ReadA:
   STA rightupcounter
   STA goingrightdown
   STA goingrightdown
-  STA switched
+  STA rightswitched
   JMP JumpRight
 
-SwitchRightLeft:
-  JSR SwitchRightLeftSub
+SwitchRightUpDown:
+  JSR SwitchRightUpDownSub
 
 ReadADone:
   
@@ -227,12 +233,12 @@ JumpUpRightLoop:
   ADC #$02
   STA $0203
 JumpUpRightLoopEnd:
-  LDA switched
+  LDA rightswitched
   CMP #$1
   BEQ JumpDownRightLoop
   LDA rightupcounter
   CMP #$05
-  BEQ SwitchRightLeft
+  BEQ SwitchRightUpDown
 
 JumpDownRightLoop:
 
@@ -247,7 +253,7 @@ JumpDownRightLoop:
 
   INC rightdowncounter
   LDA rightdowncounter
-  CMP #$05
+  CMP #$08
   BEQ JumpDownRightLoopEnd
 
   LDA $0200     ;move sprite down
@@ -263,7 +269,7 @@ JumpDownRightLoopEnd:
 
 CheckBothVars:
   LDA rightdowncounter
-  CMP #$05
+  CMP #$08
   BNE CheckBothVarsEnd
   LDA rightupcounter
   CMP #$05
