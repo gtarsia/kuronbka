@@ -32,7 +32,7 @@ leftswitched .rs 1
 
 SwitchRightUpDownSub:
   LDA #$0
-  STA goingrightup
+  STA goingrightup      ;make it go down
   LDA #$1
   STA goingrightdown
   STA rightswitched
@@ -40,7 +40,7 @@ SwitchRightUpDownSub:
 
 SwitchLeftUpDownSub:
   LDA #$0
-  STA goingleftup
+  STA goingleftup       ;make it go down
   LDA #$1
   STA goingleftdown
   STA leftswitched
@@ -153,7 +153,7 @@ LoadSpritesLoop:
   LDA #%10000000   ; enable NMI, sprites from Pattern Table 1
   STA $2000
 
-  LDA #%00010000   ; enable sprites
+  LDA #%00010010   ; enable sprites
   STA $2001
 
 Forever:
@@ -190,10 +190,11 @@ ReadA:
   AND #%00000001
   BEQ ReadADone  
 
+ContinueReadA:
   LDA #%01000000        ;flip sprite horizontally to the right
   STA $0202
 
-  LDA #$1                 ;disable left jump
+  LDA #$1                 ;Set all variables to zero to have an ability to ascend
   STA goright
   STA goingrightup
   LDA #$0
@@ -210,9 +211,9 @@ ReadA:
   STA goingleftdown
   STA leftswitched
 
-  JMP JumpRight
+  JMP JumpRight           ;jump to function
 
-SwitchRightUpDown:
+SwitchRightUpDown:          ;stop moving up and go down
   JSR SwitchRightUpDownSub
 
 ReadADone:
@@ -220,24 +221,24 @@ ReadADone:
 JumpRight:
   LDA goright       ;dont go right constantly
   CMP #$1
-  BEQ ContinueRight
-  JMP JumpRightEnd
+  BEQ ContinueRight ;use trick to extend reach of code pointer
+  JMP JumpRightEnd  ;leave cycle if variable not set
 
 ContinueRight:
   LDA #$0
   STA falling
 
-JumpUpRightLoop:
-  LDA goingrightdown
+JumpUpRightLoop:          ;start a loop to move right and up diagonally
+  LDA goingrightdown      ;see if the bird is supposed to move downwards
   CMP #$1
   BEQ JumpUpRightLoopEnd
 
-  LDA #$1
+  LDA #$1                 ;prevent it drom going down
   STA goingrightup
   LDA #$0
   STA goingrightdown
 
-  INC rightupcounter
+  INC rightupcounter      ;make a counter for the amount of frames the bird is going up
   LDA rightupcounter
   CMP #$05
   BEQ JumpUpRightLoopEnd
@@ -251,7 +252,7 @@ JumpUpRightLoop:
   CLC
   ADC #$02
   STA $0203
-JumpUpRightLoopEnd:
+JumpUpRightLoopEnd:       ;verify that the cycle above is completed and that it can now go down
   LDA rightswitched
   CMP #$1
   BEQ JumpDownRightLoop
@@ -259,18 +260,17 @@ JumpUpRightLoopEnd:
   CMP #$05
   BEQ SwitchRightUpDown
 
-JumpDownRightLoop:
-
-  LDA goingrightup
+JumpDownRightLoop:        ;go down
+  LDA goingrightup          ;see if the bird is supposed to go down
   CMP #$1
-  BEQ JumpDownRightLoopEnd
+  BEQ JumpDownEightLoopEnd
 
-  LDA #$1
+  LDA #$1                   ;prevent it from going up
   STA goingrightdown
   LDA #$0
   STA goingrightup
 
-  INC rightdowncounter
+  INC rightdowncounter        ;make a counter to count how many frames the bird goes down
   LDA rightdowncounter
   CMP #$08
   BEQ JumpDownRightLoopEnd
@@ -287,7 +287,7 @@ JumpDownRightLoop:
 JumpDownRightLoopEnd:
 
 CheckBothVarsRight:
-  LDA rightdowncounter
+  LDA rightdowncounter          ;see if both cycles have completed
   CMP #$08
   BNE CheckBothVarsRightEnd
   LDA rightupcounter
@@ -297,18 +297,24 @@ CheckBothVarsRight:
   LDA #$0
   STA goright
 
-  LDA #$1
+  LDA #$1                       ;make bird fall again
   STA falling
 
 CheckBothVarsRightEnd:
 
 JumpRightEnd:
 
+;==========================================
+;THIS SECTION WORKS PRETTY MUCH THE SAME AS
+;           THE PREVIOUS ONE
+;==========================================
+
 ReadB: 
   LDA $4016
   AND #%00000001
   BEQ ReadBDone
-  
+
+ContinueReadB:
   LDA #%00000000        ;flip sprite horizontally to the left
   STA $0202
 
@@ -439,11 +445,6 @@ ReadUp:
   LDA $4016
   AND #%0000001
   BEQ ReadUpDone
-
-  ; LDA $0200
-  ; SEC
-  ; SBC #$02
-  ; STA $0200
 ReadUpDone:
 
 ReadDown:
@@ -464,12 +465,12 @@ ReadRight:
   BEQ ReadRightDone
 ReadRightDone:
 
-Fall:
-  LDA falling
+Fall:               ;fall
+  LDA falling       ;see if supposed to fall
   CMP #$0
   BEQ DontFall
 
-  LDA $0200
+  LDA $0200         ;move down
   CLC
   ADC #$02
   STA $0200
@@ -488,11 +489,12 @@ AdvanceFrame:
   .org $E000
 palette:
   .db $0F,$31,$32,$33,$34,$35,$36,$37,$38,$39,$3A,$3B,$3C,$3D,$3E,$0F
-  .db $0F,$30,$07,$27
+  .db $0F,$30,$06,$27,$06,$30,$16
 
 sprites:
      ;vert tile attr horiz
   .db $80, $01, $00, $80   ;sprite 0
+  .db $50, $11, $00, $60
 
   .org $FFFA     ;first of the three vectors starts here
   .dw NMI        ;when an NMI happens (once per frame if enabled) the 
