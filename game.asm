@@ -5,9 +5,10 @@
 
 ;;;;;;;;;;;;;;;
 
-; DECLARE SOME VARIABLES HERE
+; DECLARE VARIABLES HERE
   .rsset $0000  ;;start variables at ram location 0
 falling .rs 1
+
 goright .rs 1
 goleft  .rs 1
 
@@ -24,6 +25,7 @@ goingleftup .rs 1
 goingleftdown .rs 1
 
 rightswitched .rs 1
+leftswitched .rs 1
 
   .bank 0
   .org $C000 
@@ -33,7 +35,15 @@ SwitchRightUpDownSub:
   STA goingrightup
   LDA #$1
   STA goingrightdown
-  STA switched
+  STA rightswitched
+  RTI
+
+SwitchLeftUpDownSub:
+  LDA #$0
+  STA goingleftup
+  LDA #$1
+  STA goingleftdown
+  STA leftswitched
   RTI
 
 AdvanceFrameFunc:
@@ -180,16 +190,26 @@ ReadA:
   AND #%00000001
   BEQ ReadADone  
 
+  LDA #%01000000        ;flip sprite horizontally to the right
+  STA $0202
+
   LDA #$1                 ;disable left jump
   STA goright
   STA goingrightup
   LDA #$0
-  STA goleft
   STA rightdowncounter
   STA rightupcounter
   STA goingrightdown
   STA goingrightdown
   STA rightswitched
+
+  STA goleft
+  STA leftupcounter
+  STA leftdowncounter
+  STA goingleftup
+  STA goingleftdown
+  STA leftswitched
+
   JMP JumpRight
 
 SwitchRightUpDown:
@@ -197,14 +217,13 @@ SwitchRightUpDown:
 
 ReadADone:
   
-
 JumpRight:
   LDA goright       ;dont go right constantly
   CMP #$1
-  BEQ Continue
+  BEQ ContinueRight
   JMP JumpRightEnd
 
-Continue:
+ContinueRight:
   LDA #$0
   STA falling
 
@@ -257,7 +276,7 @@ JumpDownRightLoop:
   BEQ JumpDownRightLoopEnd
 
   LDA $0200     ;move sprite down
-  SEC
+  CLC
   ADC #$02
   STA $0200
 
@@ -267,13 +286,13 @@ JumpDownRightLoop:
   STA $0203
 JumpDownRightLoopEnd:
 
-CheckBothVars:
+CheckBothVarsRight:
   LDA rightdowncounter
   CMP #$08
-  BNE CheckBothVarsEnd
+  BNE CheckBothVarsRightEnd
   LDA rightupcounter
   CMP #$05
-  BNE CheckBothVarsEnd
+  BNE CheckBothVarsRightEnd
 
   LDA #$0
   STA goright
@@ -281,7 +300,7 @@ CheckBothVars:
   LDA #$1
   STA falling
 
-CheckBothVarsEnd:
+CheckBothVarsRightEnd:
 
 JumpRightEnd:
 
@@ -289,7 +308,120 @@ ReadB:
   LDA $4016
   AND #%00000001
   BEQ ReadBDone
+  
+  LDA #%00000000        ;flip sprite horizontally to the left
+  STA $0202
+
+  LDA #$1                 ;disable right jump
+  STA goleft
+  STA goingleftup
+  LDA #$0
+  STA goright
+  STA rightdowncounter
+  STA rightupcounter
+  STA goingrightdown
+  STA goingrightdown
+  STA rightswitched
+
+  STA leftupcounter
+  STA leftdowncounter
+  STA goingleftup
+  STA goingleftdown
+  STA leftswitched
+
+  JMP JumpLeft
+
+SwitchLeftUpDown:
+  JSR SwitchLeftUpDownSub
+
 ReadBDone:
+
+JumpLeft:
+  LDA goleft       ;dont go left constantly
+  CMP #$1
+  BEQ ContinueLeft
+  JMP JumpLeftEnd
+
+ContinueLeft:
+  LDA #$0
+  STA falling
+
+JumpUpLeftLoop:
+  LDA goingleftdown
+  CMP #$1
+  BEQ JumpUpLeftLoopEnd
+
+  LDA #$1
+  STA goingleftup
+  LDA #$0
+  STA goingleftdown
+
+  INC leftupcounter
+  LDA leftupcounter
+  CMP #$05
+  BEQ JumpUpLeftLoopEnd
+
+  LDA $0200     ;move sprite up
+  CLC
+  SBC #$02
+  STA $0200
+
+  LDA $0203     ;move sprite right
+  SEC
+  SBC #$02
+  STA $0203
+JumpUpLeftLoopEnd:
+  LDA leftswitched
+  CMP #$1
+  BEQ JumpDownLeftLoop
+  LDA leftupcounter
+  CMP #$05
+  BEQ SwitchLeftUpDown
+
+JumpDownLeftLoop:
+
+  LDA goingleftup
+  CMP #$1
+  BEQ JumpDownLeftLoopEnd
+
+  LDA #$1
+  STA goingleftdown
+  LDA #$0
+  STA goingleftup
+
+  INC leftdowncounter
+  LDA leftdowncounter
+  CMP #$08
+  BEQ JumpDownLeftLoopEnd
+
+  LDA $0200     ;move sprite down
+  CLC
+  ADC #$02
+  STA $0200
+
+  LDA $0203     ;move sprite left
+  SEC
+  SBC #$02
+  STA $0203
+JumpDownLeftLoopEnd:
+
+CheckBothVarsLeft:
+  LDA leftdowncounter
+  CMP #$08
+  BNE CheckBothVarsLeftEnd
+  LDA leftupcounter
+  CMP #$05
+  BNE CheckBothVarsLeftEnd
+
+  LDA #$0
+  STA goleft
+
+  LDA #$1
+  STA falling
+
+CheckBothVarsLeftEnd:
+
+JumpLeftEnd:
 
 ReadSelect:
   LDA $4016
@@ -324,23 +456,12 @@ ReadLeft:
   LDA $4016
   AND #%00000001
   BEQ ReadLeftDone
-
-  LDA #%00000000        ;flip sprite horizontally to the left
-  STA $0202
-
-  ; LDA $0203
-  ; SEC
-  ; SBC #$02
-  ; STA $0203
 ReadLeftDone:
 
 ReadRight:
   LDA $4016
   AND #%00000001
   BEQ ReadRightDone
-
-  LDA #%01000000        ;flip sprite horizontally to the right
-  STA $0202
 ReadRightDone:
 
 Fall:
