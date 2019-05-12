@@ -263,7 +263,7 @@ JumpUpRightLoopEnd:       ;verify that the cycle above is completed and that it 
 JumpDownRightLoop:        ;go down
   LDA goingrightup          ;see if the bird is supposed to go down
   CMP #$1
-  BEQ JumpDownEightLoopEnd
+  BEQ JumpDownRightLoopEnd
 
   LDA #$1                   ;prevent it from going up
   STA goingrightdown
@@ -489,12 +489,12 @@ AdvanceFrame:
   .org $E000
 palette:
   .db $0F,$31,$32,$33,$34,$35,$36,$37,$38,$39,$3A,$3B,$3C,$3D,$3E,$0F
-  .db $0F,$30,$06,$27,$06,$30,$16
+  .db $0F,$30,$06,$27
 
 sprites:
      ;vert tile attr horiz
-  .db $80, $01, $00, $80   ;sprite 0
-  .db $50, $11, $00, $60
+  .db $80, $01, $00, $80    ;sprite 0
+  ;.db $50, $10, $00, $60    ;sprite 1
 
   .org $FFFA     ;first of the three vectors starts here
   .dw NMI        ;when an NMI happens (once per frame if enabled) the 
