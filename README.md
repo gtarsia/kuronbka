@@ -11,7 +11,9 @@ The .ASM and .CHR files are provided and it can be assembled on Windows and Linu
 ```bash
 sudo apt-get install nesasm
 
-nesasm game.asm
+make all # to build files
+
+make clean # to clean files
 ```
 
 The program outuputs a game.nes ROM file which should be able to run in any NES emulator
