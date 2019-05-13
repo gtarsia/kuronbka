@@ -3,4 +3,4 @@
 *Create background
 *Better movement /
 *Music
-*Collisions .
+*Collisions . FIX COLLISIONS! PRODUCES BUG WHEN PLAYED
